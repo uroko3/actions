@@ -11,7 +11,7 @@ jobs:
 
     env:
       FUNCTION_NAME: my-python-lambda  # ← 任意の関数名
-      ROLE_ARN: arn:aws:iam::730335285380:role/service-role/nodejs_lambda-role-de9f6748  # ← Lambdaに付与するIAMロール
+      ROLE_ARN: ${{ secrets.AWS_ROLE }}  # ← Lambdaに付与するIAMロール
 
     steps:
       - name: Checkout code
