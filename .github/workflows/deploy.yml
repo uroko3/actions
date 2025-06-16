@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      PYTHON_VERSION: '3.13'
+      PYTHON_RUNTIME: 'python3.13'
       FUNCTION_NAME: my-python-lambda  # ← 任意の関数名
       ROLE_ARN: ${{ secrets.AWS_ROLE }}  # ← Lambdaに付与するIAMロール
 
@@ -20,7 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: |
@@ -49,14 +51,20 @@ jobs:
 
           if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
             echo "Function exists. Updating..."
+            aws lambda update-function-configuration \
+            --function-name $FUNCTION_NAME \
+            --runtime $PYTHON_RUNTIME
+            
             aws lambda update-function-code \
               --function-name "$FUNCTION_NAME" \
               --zip-file fileb://function.zip
+              
           else
             echo "Function does not exist. Creating..."
             aws lambda create-function \
               --function-name "$FUNCTION_NAME" \
-              --runtime python3.11 \
+              #--runtime python3.11 \
+              --runtime $PYTHON_RUNTIME \
               --role "$ROLE_ARN" \
               --handler lambda_function.lambda_handler \
               --zip-file fileb://function.zip
