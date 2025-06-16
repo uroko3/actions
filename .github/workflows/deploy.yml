@@ -65,7 +65,7 @@ jobs:
             aws lambda create-function \
               --function-name "$FUNCTION_NAME" \
               --runtime $PYTHON_RUNTIME \
-              --vpc-config SubnetIds=${{ secrets.AWS_VPC_SUBNET_ID1 }},SecurityGroupIds=sg-08ee1e2383bbda5be \
+              --vpc-config SubnetIds=${{ secrets.AWS_VPC_SUBNET_ID1 }},SecurityGroupIds=sg-02304825de0b6e8c2 \
               --role "$ROLE_ARN" \
               --handler lambda_function.lambda_handler \
               --zip-file fileb://function.zip
