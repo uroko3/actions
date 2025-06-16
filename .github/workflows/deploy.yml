@@ -52,10 +52,17 @@ jobs:
 
           if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
             echo "Function exists. Updating..."
-            aws lambda update-function-configuration \
-            --function-name $FUNCTION_NAME \
-            --runtime $PYTHON_RUNTIME \
             
+            # ❶ ランタイムや VPC を変えるとき
+            aws lambda update-function-configuration \
+              --function-name "$FUNCTION_NAME" \
+              --runtime "$PYTHON_RUNTIME" \
+              --vpc-config SubnetIds=${{ secrets.AWS_VPC_SUBNET_ID1 }},SecurityGroupIds=sg-02304825de0b6e8c2
+
+            # ❷ 構成反映が終わるのを待つ（衝突対策）
+            aws lambda wait function-updated-v2 --function-name "$FUNCTION_NAME"
+
+            # ❸ コードを更新
             aws lambda update-function-code \
               --function-name "$FUNCTION_NAME" \
               --zip-file fileb://function.zip
