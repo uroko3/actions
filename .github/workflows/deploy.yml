@@ -64,7 +64,6 @@ jobs:
             echo "Function does not exist. Creating..."
             aws lambda create-function \
               --function-name "$FUNCTION_NAME" \
-              #--runtime python3.11 \
               --runtime $PYTHON_RUNTIME \
               --role "$ROLE_ARN" \
               --handler lambda_function.lambda_handler \
