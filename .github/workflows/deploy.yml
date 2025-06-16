@@ -13,7 +13,7 @@ jobs:
     env:
       PYTHON_VERSION: '3.13'
       PYTHON_RUNTIME: 'python3.13'
-      FUNCTION_NAME: my-python-lambda  # ← 任意の関数名
+      FUNCTION_NAME: test-actions-python  # ← 任意の関数名
       ROLE_ARN: ${{ secrets.AWS_ROLE }}  # ← Lambdaに付与するIAMロール
 
     steps:
@@ -51,6 +51,7 @@ jobs:
           set -e
 
           if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
+            # 更新
             echo "Function exists. Updating..."
             
             # ❶ ランタイムや VPC を変えるとき
@@ -68,6 +69,7 @@ jobs:
               --zip-file fileb://function.zip
               
           else
+            # 新規作成
             echo "Function does not exist. Creating..."
             aws lambda create-function \
               --function-name "$FUNCTION_NAME" \
