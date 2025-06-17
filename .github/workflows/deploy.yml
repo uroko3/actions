@@ -79,3 +79,37 @@ jobs:
               --handler lambda_function.lambda_handler \
               --zip-file fileb://function.zip
           fi
+
+          # 作成／更新完了まで待機
+          aws lambda wait function-active-v2 --function-name "$FUNCTION_NAME"
+
+      # -----------------------------------------------------------------------------
+      # バージョン発行
+      - name: Publish new version
+        id: publish
+        run: |
+          VERSION=$(aws lambda publish-version \
+            --function-name "$FUNCTION_NAME" \
+            --description "GitHub $GITHUB_SHA" \
+            --query 'Version' --output text)
+          echo "📦 Published Lambda version: $VERSION"
+          echo "NEW_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      # -----------------------------------------------------------------------------
+      # prod エイリアスを新バージョンへ向け直す
+      - name: Point alias "prod" to new version
+        run: |
+          ALIAS_NAME=prod
+          if aws lambda get-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" >/dev/null 2>&1; then
+            echo "🔄 Updating alias $ALIAS_NAME → version $NEW_VERSION"
+            aws lambda update-alias \
+              --function-name "$FUNCTION_NAME" \
+              --name "$ALIAS_NAME" \
+              --function-version "$NEW_VERSION"
+          else
+            echo "✨ Creating alias $ALIAS_NAME → version $NEW_VERSION"
+            aws lambda create-alias \
+              --function-name "$FUNCTION_NAME" \
+              --name "$ALIAS_NAME" \
+              --function-version "$NEW_VERSION"
+          fi
