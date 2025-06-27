@@ -1,0 +1,34 @@
+name: lambdaデプロイ
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '対象環境'
+        default: 'dev'
+        type: environment
+        required: true
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ジョブ開始時にメッセージを表示
+      - name: Job start
+        run: echo "Lambda deployment job started for environment: ${{ inputs.environment }}"
+
+      # ここにLambdaデプロイのステップを追加していく
+
+      # ジョブ終了時にメッセージを表示
+      - name: Job end
+        run: echo "Lambda deployment job ended for environment: ${{ inputs.environment }}"
