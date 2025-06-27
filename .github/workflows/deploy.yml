@@ -38,4 +38,4 @@ jobs:
       - name: Job end
         run: |
           set -e
-          echo "Lambda deployment job ended for environment: $ENV2"
+          echo "Lambda deployment job ended for environment: ${{ github.event.inputs.environment }}"
