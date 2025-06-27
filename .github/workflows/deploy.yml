@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Job start
-        run: echo "Lambda deployment job started for environment:"
+        run: echo "Lambda deployment job started for environment: ${{ github.event.inputs.environment }}"
 
       - name: Job end
-        run: echo "Lambda deployment job ended for environment:"
+        run: echo "Lambda deployment job ended for environment: ${{ github.event.inputs.environment }}"
