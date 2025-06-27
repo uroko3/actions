@@ -22,7 +22,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    #environment: ${{ github.event.inputs.environment }}
+    # 管理画面のEnvironmentsに対応する。dev,stgごとのシークレットなどが設定できる。
+    environment: ${{ github.event.inputs.environment }}
 
     steps:
       - name: set env
