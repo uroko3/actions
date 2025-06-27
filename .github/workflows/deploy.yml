@@ -18,10 +18,11 @@ jobs:
       - name: set env
         run: |
           ENV="${{ github.event.inputs.environment }}"
-          echo "environment: $ENV"
+          echo "environment: $ENV" >> $ENV2
         
       - name: Job start
-        run: echo "Lambda deployment job started for environment:"
+        run: |
+          run: echo "Lambda deployment job started for environment: $ENV2"
 
       - name: Job end
         run: echo "Lambda deployment job ended for environment:"
