@@ -5,8 +5,8 @@ on:
     inputs:
       environment:
         description: '対象環境'
-        default: 'dev'
         required: true
+        default: 'dev'
         type: string
 
 jobs:
