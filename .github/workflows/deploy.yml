@@ -18,7 +18,7 @@ jobs:
       - name: set env
         run: |
           ENV="${{ github.event.inputs.environment }}"
-          echo "environment: $ENV" >> $ENV2
+          echo "ENV2=$ENV" >> $GITHUB_ENV
         
       - name: Job start
         run: |
