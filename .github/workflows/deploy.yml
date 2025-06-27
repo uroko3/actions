@@ -9,6 +9,16 @@ on:
         default: 'dev'
         type: string
 
+workflow_call:
+  inputs:
+    environment:
+      type: string
+      required: true
+
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
