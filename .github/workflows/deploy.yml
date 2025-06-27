@@ -12,10 +12,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Job start
-        run: echo "Lambda deployment job started for environment: ${{ github.event.inputs.environment }}"
+        run: echo "Lambda deployment job started for environment:"
 
       - name: Job end
-        run: echo "Lambda deployment job ended for environment: ${{ github.event.inputs.environment }}"
+        run: echo "Lambda deployment job ended for environment:"
