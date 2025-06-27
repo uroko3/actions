@@ -7,8 +7,12 @@ on:
         description: '対象環境'
         required: true
         default: 'dev'
-        type: string
-
+        type: choice
+        options:
+          - dev
+          - stg
+          - pro
+          
   workflow_call:
     inputs:
       environment:
