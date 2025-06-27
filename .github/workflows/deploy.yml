@@ -1,14 +1,14 @@
 name: lambdaデプロイ
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # 手動トリガーの設定
     inputs:
       environment:
         description: '対象環境'
         default: 'dev'
         type: string
         required: true
-  workflow_call:
+  workflow_call:  # 他のワークフローから呼び出される設定
     inputs:
       environment:
         type: string
