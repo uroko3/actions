@@ -9,10 +9,6 @@ on:
         required: true
         type: string
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,10 +16,10 @@ jobs:
     steps:
       # ジョブ開始時にメッセージを表示
       - name: Job start
-        run: echo "Lambda deployment job started for environment: ${{ inputs.environment }}"
+        run: echo "Lambda deployment job started for environment: ${{ github.event.inputs.environment }}"
 
       # ここにLambdaデプロイのステップを追加していく
 
       # ジョブ終了時にメッセージを表示
       - name: Job end
-        run: echo "Lambda deployment job ended for environment: ${{ inputs.environment }}"
+        run: echo "Lambda deployment job ended for environment: ${{ github.event.inputs.environment }}"
