@@ -22,6 +22,7 @@ jobs:
         
       - name: Job start
         run: |
+          set -e
           echo "Lambda deployment job started for environment: $ENV2"
 
       - name: Job end
