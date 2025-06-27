@@ -1,0 +1,125 @@
+name: Deploy Python Lambda (create if not exists)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment (dev or prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      PYTHON_VERSION: '3.13'
+      PYTHON_RUNTIME: 'python3.13'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt -t python/
+          cp lambda_function.py python/
+
+      - name: Zip Lambda package
+        run: |
+          cd python
+          zip -r ../function.zip .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Set environment-specific variables
+        id: vars
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          echo "Environment: $ENV"
+
+          if [ "$ENV" = "prod" ]; then
+            echo "FUNCTION_NAME=test-actions-python-prod" >> $GITHUB_ENV
+            echo "ROLE_ARN=${{ secrets.AWS_ROLE_PROD }}" >> $GITHUB_ENV
+            echo "SUBNET_ID=${{ secrets.AWS_VPC_SUBNET_ID1_PROD }}" >> $GITHUB_ENV
+            echo "SG_ID=${{ secrets.AWS_SG_ID_PROD }}" >> $GITHUB_ENV
+            echo "ALIAS_NAME=prod" >> $GITHUB_ENV
+          else
+            echo "FUNCTION_NAME=test-actions-python-dev" >> $GITHUB_ENV
+            echo "ROLE_ARN=${{ secrets.AWS_ROLE_DEV }}" >> $GITHUB_ENV
+            echo "SUBNET_ID=${{ secrets.AWS_VPC_SUBNET_ID1_DEV }}" >> $GITHUB_ENV
+            echo "SG_ID=${{ secrets.AWS_SG_ID_DEV }}" >> $GITHUB_ENV
+            echo "ALIAS_NAME=dev" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy (create or update)
+        run: |
+          set -e
+          if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
+            echo "Function exists. Updating..."
+
+            aws lambda update-function-configuration \
+              --function-name "$FUNCTION_NAME" \
+              --runtime "$PYTHON_RUNTIME" \
+              --vpc-config SubnetIds=$SUBNET_ID,SecurityGroupIds=$SG_ID
+
+            aws lambda wait function-updated-v2 --function-name "$FUNCTION_NAME"
+
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://function.zip
+          else
+            echo "Function does not exist. Creating..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --runtime "$PYTHON_RUNTIME" \
+              --vpc-config SubnetIds=$SUBNET_ID,SecurityGroupIds=$SG_ID \
+              --role "$ROLE_ARN" \
+              --handler lambda_function.lambda_handler \
+              --zip-file fileb://function.zip
+          fi
+
+          aws lambda wait function-active-v2 --function-name "$FUNCTION_NAME"
+
+      - name: Publish new version
+        id: publish
+        run: |
+          VERSION=$(aws lambda publish-version \
+            --function-name "$FUNCTION_NAME" \
+            --description "GitHub $GITHUB_SHA" \
+            --query 'Version' --output text)
+          echo "📦 Published Lambda version: $VERSION"
+          echo "NEW_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Point alias to new version
+        run: |
+          if aws lambda get-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" >/dev/null 2>&1; then
+            echo "🔄 Updating alias $ALIAS_NAME → version $NEW_VERSION"
+            aws lambda update-alias \
+              --function-name "$FUNCTION_NAME" \
+              --name "$ALIAS_NAME" \
+              --function-version "$NEW_VERSION"
+          else
+            echo "✨ Creating alias $ALIAS_NAME → version $NEW_VERSION"
+            aws lambda create-alias \
+              --function-name "$FUNCTION_NAME" \
+              --name "$ALIAS_NAME" \
+              --function-version "$NEW_VERSION"
+          fi
