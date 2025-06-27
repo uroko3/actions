@@ -22,7 +22,7 @@ jobs:
         
       - name: Job start
         run: |
-          run: echo "Lambda deployment job started for environment: $ENV2"
+          echo "Lambda deployment job started for environment: $ENV2"
 
       - name: Job end
         run: echo "Lambda deployment job ended for environment:"
