@@ -6,7 +6,7 @@ on:
       environment:
         description: '対象環境'
         default: 'dev'
-        type: environment
+        type: string
         required: true
   workflow_call:
     inputs:
