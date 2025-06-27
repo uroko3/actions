@@ -9,11 +9,11 @@ on:
         default: 'dev'
         type: string
 
-workflow_call:
-  inputs:
-    environment:
-      type: string
-      required: true
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
 
 permissions:
   id-token: write
