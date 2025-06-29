@@ -1,0 +1,46 @@
+name: lambdaデプロイ2
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '対象環境'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - stg
+          - pro
+          
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # 管理画面のEnvironmentsに対応する。dev,stgごとのシークレットなどが設定できる。
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: set env
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          echo "ENV2=$ENV" >> $GITHUB_ENV
+        
+      - name: Job start
+        run: |
+          set -e
+          echo "Lambda deployment job started for environment: $ENV2"
+
+      - name: Job end
+        run: |
+          set -e
+          echo "Lambda deployment job ended for environment: ${{ github.event.inputs.environment }}"
