@@ -1,4 +1,4 @@
-name: lambdaデプロイ
+name: lambdaデプロイ2
 
 on:
   workflow_dispatch:
