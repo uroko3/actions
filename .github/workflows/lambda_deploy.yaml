@@ -73,9 +73,9 @@ jobs:
             echo "ALIAS_NAME=prod" >> $GITHUB_ENV
           else
             echo "FUNCTION_NAME=test-actions-python-dev" >> $GITHUB_ENV
-            echo "ROLE_ARN=${{ secrets.AWS_ROLE_DEV }}" >> $GITHUB_ENV
-            echo "SUBNET_ID=${{ secrets.AWS_VPC_SUBNET_ID1_DEV }}" >> $GITHUB_ENV
-            echo "SG_ID=${{ secrets.AWS_SG_ID_DEV }}" >> $GITHUB_ENV
+            echo "ROLE_ARN=${{ secrets.AWS_ROLE }}" >> $GITHUB_ENV
+            echo "SUBNET_ID=${{ secrets.AWS_VPC_SUBNET_ID1 }}" >> $GITHUB_ENV
+            echo "SG_ID=${{ secrets.AWS_SG_ID }}" >> $GITHUB_ENV
             echo "ALIAS_NAME=dev" >> $GITHUB_ENV
           fi
 
