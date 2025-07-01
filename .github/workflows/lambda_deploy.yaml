@@ -53,6 +53,9 @@ jobs:
       #    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       #    aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Debug role ARN
+        run: echo "ROLE = ${{ secrets.AWS_DEPLOY_ROLE }}"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
