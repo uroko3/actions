@@ -120,25 +120,16 @@ jobs:
             grep "^$1=" .env | cut -d '=' -f2- | sed 's/^"\(.*\)"$/\1/'
           }
         
-          DB_HOST_R=$(parse_env DB_HOST_R)
-          DB_HOST_W=$(parse_env DB_HOST_W)
-          DB_PORT=$(parse_env DB_PORT)
-          DB_USERNAME=$(parse_env DB_USERNAME)
-          DB_PASSWORD=$(parse_env DB_PASSWORD)
+          HOST=$(parse_env DB_HOST)
+          PASSWORD=$(parse_env PASSWORD)
         
           jq -n \
-            --arg DB_HOST_R "$DB_HOST_R" \
-            --arg DB_HOST_W "$DB_HOST_W" \
-            --arg DB_PORT "$DB_PORT" \
-            --arg DB_USERNAME "$DB_USERNAME" \
-            --arg DB_PASSWORD "$DB_PASSWORD" \
+            --arg HOST "$HOST" \
+            --arg PASSWORD "$PASSWORD" \
             '{
               Variables: {
-                DB_HOST_R: $DB_HOST_R,
-                DB_HOST_W: $DB_HOST_W,
-                DB_PORT: $DB_PORT,
-                DB_USERNAME: $DB_USERNAME,
-                DB_PASSWORD: $DB_PASSWORD
+                HOST: $HOST,
+                PASSWORD: $PASSWORD
               }
             }' > env.json
           cat env.json
