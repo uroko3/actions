@@ -23,6 +23,7 @@ jobs:
     env:
       PYTHON_VERSION: '3.13'
       PYTHON_RUNTIME: 'python3.13'
+      variable: 'hoge$]hoges'
 
     steps:
       - name: Checkout code
@@ -116,7 +117,7 @@ jobs:
       - name: set variables
         run: |
           echo "set variables"
-          aws lambda update-function-configuration --function-name "$FUNCTION_NAME" --environment "Variables={ENV1='hoge$]hoge',ENV2=hog}"
+          aws lambda update-function-configuration --function-name "$FUNCTION_NAME" --environment "Variables={ENV1='${{ env.valiable }}',ENV2=hog}"
 
       - name: Publish new version
         id: publish
