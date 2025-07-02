@@ -112,7 +112,37 @@ jobs:
           fi
 
           aws lambda wait function-active-v2 --function-name "$FUNCTION_NAME"
-
+          
+      - name: Deploy (create or update)
+        run: |
+          echo "load .env values"
+          parse_env() {
+            grep "^$1=" .env | cut -d '=' -f2- | sed 's/^"\(.*\)"$/\1/'
+          }
+        
+          DB_HOST_R=$(parse_env DB_HOST_R)
+          DB_HOST_W=$(parse_env DB_HOST_W)
+          DB_PORT=$(parse_env DB_PORT)
+          DB_USERNAME=$(parse_env DB_USERNAME)
+          DB_PASSWORD=$(parse_env DB_PASSWORD)
+        
+          jq -n \
+            --arg DB_HOST_R "$DB_HOST_R" \
+            --arg DB_HOST_W "$DB_HOST_W" \
+            --arg DB_PORT "$DB_PORT" \
+            --arg DB_USERNAME "$DB_USERNAME" \
+            --arg DB_PASSWORD "$DB_PASSWORD" \
+            '{
+              Variables: {
+                DB_HOST_R: $DB_HOST_R,
+                DB_HOST_W: $DB_HOST_W,
+                DB_PORT: $DB_PORT,
+                DB_USERNAME: $DB_USERNAME,
+                DB_PASSWORD: $DB_PASSWORD
+              }
+            }' > env.json
+          cat env.json
+        
       - name: Publish new version
         id: publish
         run: |
