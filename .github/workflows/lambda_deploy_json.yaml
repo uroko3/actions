@@ -131,7 +131,7 @@ jobs:
           #echo "PPPPPPPPP = ${{ env.PASSWORD }}"
           jq -n \
             --arg host "${{ env.HOST }}" \
-            --arg password "aaa" \
+            --arg password ${{ env.PASSWORD }} \
             '{
               Variables: {
                 HOST: $host,
