@@ -120,7 +120,7 @@ jobs:
             grep "^$1=" .env | cut -d '=' -f2- | sed 's/^"\(.*\)"$/\1/'
           }
         
-          HOST=$(parse_env DB_HOST)
+          HOST=$(parse_env HOST)
           PASSWORD=$(parse_env PASSWORD)
         
           jq -n \
