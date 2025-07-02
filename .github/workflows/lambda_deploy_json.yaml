@@ -132,7 +132,13 @@ jobs:
                 PASSWORD: $PASSWORD
               }
             }' > env.json
+
+          echo "Generated env.json:"
           cat env.json
+      
+          aws lambda update-function-configuration \
+            --function-name "$FUNCTION_NAME" \
+            --environment file://env.json
         
       - name: Publish new version
         id: publish
