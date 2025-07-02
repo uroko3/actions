@@ -117,7 +117,7 @@ jobs:
       - name: set variables
         run: |
           echo "set variables"
-          aws lambda update-function-configuration --function-name "$FUNCTION_NAME" --environment "Variables={ENV1='${{ env.valiable }}',ENV2=hog}"
+          aws lambda update-function-configuration --function-name "$FUNCTION_NAME" --environment "Variables={ENV1='aaa$[bbb',ENV2=hog}"
 
       - name: Publish new version
         id: publish
