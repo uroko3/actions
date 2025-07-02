@@ -120,8 +120,8 @@ jobs:
           source .env
           set +a
           
-          echo "HOST=$HOST" >> $GITHUB_ENV
-          echo "PASSWORD=$PASSWORD" >> $GITHUB_ENV
+          echo "HOST=$DHOST" >> $GITHUB_ENV
+          echo "PASSWORD=$DPASSWORD" >> $GITHUB_ENV
           
       - name: JSON
         run: |
