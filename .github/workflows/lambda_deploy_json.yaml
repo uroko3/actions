@@ -112,24 +112,26 @@ jobs:
           fi
 
           aws lambda wait function-active-v2 --function-name "$FUNCTION_NAME"
+
+      - name: env yomikomi
+        run: |
+          echo "env yomikomi"
+          set -a
+          source laravel/.env
+          set +a
+          
+          echo "HOST=$HOST" >> $GITHUB_ENV
+          echo "PASSWORD=$PASSWORD" >> $GITHUB_ENV
           
       - name: JSON
         run: |
-          echo "load .env values"
-          parse_env() {
-            grep "^$1=" .env | cut -d '=' -f2- | sed 's/^"\(.*\)"$/\1/'
-          }
-        
-          HOST=$(parse_env HOST)
-          PASSWORD=$(parse_env PASSWORD)
-        
           jq -n \
-            --arg HOST "$HOST" \
-            --arg PASSWORD "$PASSWORD" \
+            --arg host "${{ env.HOST }}" \
+            --arg password "${{ env.PASSWORD }}" \
             '{
               Variables: {
-                HOST: $HOST,
-                PASSWORD: $PASSWORD
+                HOST: $host,
+                PASSWORD: $password
               }
             }' > env.json
 
