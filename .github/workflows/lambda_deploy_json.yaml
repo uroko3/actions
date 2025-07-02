@@ -130,7 +130,7 @@ jobs:
         run: |
           jq -n \
             --arg host "${{ env.HOST }}" \
-            --arg password "${{ env.PASSWORD }}" \
+            --arg password "aaa" \
             '{
               Variables: {
                 HOST: $host,
