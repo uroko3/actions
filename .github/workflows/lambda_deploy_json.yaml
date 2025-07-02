@@ -113,7 +113,7 @@ jobs:
 
           aws lambda wait function-active-v2 --function-name "$FUNCTION_NAME"
           
-      - name: Deploy (create or update)
+      - name: JSON
         run: |
           echo "load .env values"
           parse_env() {
