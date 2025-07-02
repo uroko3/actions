@@ -116,12 +116,15 @@ jobs:
       - name: env yomikomi
         run: |
           echo "env yomikomi"
-          set -a
-          source .env
-          set +a
+          get_env() {
+            grep "^$1=" .env | cut -d '=' -f2- | sed 's/^"\(.*\)"$/\1/'
+          }
+
+          HOST=$(get_env DHOST)
+          PASSWORD=$(get_env DPASSWORD)
           
-          echo "HOST=$DHOST" >> $GITHUB_ENV
-          echo "PASSWORD=$DPASSWORD" >> $GITHUB_ENV
+          echo "HOST=$HOST" >> $GITHUB_ENV
+          echo "PASSWORD=$PASSWORD" >> $GITHUB_ENV
           
       - name: JSON
         run: |
