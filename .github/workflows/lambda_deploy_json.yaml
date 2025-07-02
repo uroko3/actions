@@ -128,6 +128,7 @@ jobs:
           
       - name: JSON
         run: |
+          echo "PPPPPPPPP = ${{ env.PASSWORD }}"
           jq -n \
             --arg host "${{ env.HOST }}" \
             --arg password "aaa" \
