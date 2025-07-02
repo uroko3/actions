@@ -1,0 +1,24 @@
+run: |
+  echo "load .env values"
+
+
+  
+  DB_PORT=$(grep "^DB_PORT=" .env | cut -d '=' -f2-)
+  
+  # jq で JSON を安全に構成
+  ENV_JSON=$(jq -n \
+    --arg DB_PORT "$DB_PORT" \
+   
+    '{
+      Variables: {
+        
+        DB_PORT: $DB_PORT,
+        
+      }
+    }'
+  )
+
+  echo "updating lambda configuration"
+  aws lambda update-function-configuration \
+    --function-name "$FUNCTION_NAME" \
+    --environment "$ENV_JSON"
