@@ -16,3 +16,4 @@ runs:
     - run: |
         echo "🚧 Lambda name is ${{ inputs.lambda_name }}"
         echo "pre_message=Hello from Pre for ${{ inputs.lambda_name }}" >> $GITHUB_OUTPUT
+      shell: bash
