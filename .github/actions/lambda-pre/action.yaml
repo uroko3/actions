@@ -7,7 +7,7 @@ inputs:
     description: '対象Lambda名'
 
 outputs:
-  pre_output:
+  pre_message:
     description: "前処理で生成したメッセージ"
 
 runs:
@@ -15,5 +15,5 @@ runs:
   steps:
     - run: |
         echo "🚧 Lambda name is ${{ inputs.lambda_name }}"
-        echo "pre_output=Hello from Pre for ${{ inputs.lambda_name }}" >> $GITHUB_OUTPUT
+        echo "pre_message=Hello from Pre for ${{ inputs.lambda_name }}" >> $GITHUB_OUTPUT
       shell: bash
