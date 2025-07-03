@@ -10,6 +10,7 @@ inputs:
 outputs:
   zip_path:
     description: "生成されたZIPパス"
+    value: function.zip
 
 runs:
   using: "composite"
@@ -19,7 +20,6 @@ runs:
         echo "dummy content" > build/lambda_function.py
         cd build
         zip -r ../function.zip .
-        echo "zip_path=function.zip" >> $GITHUB_OUTPUT
       shell: bash
 
     - run: |
