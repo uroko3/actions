@@ -1,0 +1,23 @@
+name: Lambda Main Step
+description: Lambdaメイン処理
+
+inputs:
+  lambda_name:
+    required: true
+  pre_output:
+    required: false
+
+outputs:
+  zip_path:
+    description: "生成されたZIPパス"
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        mkdir -p build
+        echo "dummy content" > build/lambda_function.py
+        cd build
+        zip -r ../function.zip .
+        echo "zip_path=function.zip" >> $GITHUB_OUTPUT
+        echo "📝 受け取った pre_output: ${{ inputs.pre_output }}"
