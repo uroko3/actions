@@ -12,5 +12,7 @@ runs:
   steps:
     - run: |
         echo "✅ Lambda処理完了：${{ inputs.lambda_name }}"
-        echo "📦 ZIPファイルの場所: ${{ inputs.main_result }}"
+        echo "📦 ZIPファイルの場所: $MAIN_RESULT"
       shell: bash
+      env:
+        MAIN_RESULT: ${{ inputs.main_result }}
