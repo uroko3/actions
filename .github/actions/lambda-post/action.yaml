@@ -13,3 +13,4 @@ runs:
     - run: |
         echo "✅ Lambda処理完了：${{ inputs.lambda_name }}"
         echo "📦 ZIPファイルの場所: ${{ inputs.main_result }}"
+      shell: bash
