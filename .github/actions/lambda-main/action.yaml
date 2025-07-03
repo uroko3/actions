@@ -21,3 +21,4 @@ runs:
         zip -r ../function.zip .
         echo "zip_path=function.zip" >> $GITHUB_OUTPUT
         echo "📝 受け取った pre_output: ${{ inputs.pre_output }}"
+      shell: bash
