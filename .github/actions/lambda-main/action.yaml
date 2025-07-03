@@ -20,10 +20,10 @@ runs:
         cd build
         zip -r ../function.zip .
         echo "zip_path=function.zip" >> $GITHUB_OUTPUT
-    shell: bash
+      shell: bash
 
     - run: |
         echo "📝 受け取った pre_output: $PRE_OUTPUT"
-    shell: bash
-    env:
-      PRE_OUTPUT: ${{ inputs.pre_output }}
+      shell: bash
+      env:
+        PRE_OUTPUT: ${{ inputs.pre_output }}
