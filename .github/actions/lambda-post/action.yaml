@@ -1,0 +1,15 @@
+name: Lambda Post Step
+description: Lambda後処理
+
+inputs:
+  lambda_name:
+    required: true
+  main_result:
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        echo "✅ Lambda処理完了：${{ inputs.lambda_name }}"
+        echo "📦 ZIPファイルの場所: ${{ inputs.main_result }}"
