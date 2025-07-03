@@ -1,46 +1,36 @@
-name: lambdaデプロイ
+name: Deploy Lambda With Steps
 
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: '対象環境'
+      lambda_name:
+        description: 'Lambdaの名前（lambda1, lambda2など）'
         required: true
-        default: 'dev'
-        type: choice
-        options:
-          - dev
-          - stg
-          - pro
-          
-  workflow_call:
-    inputs:
-      environment:
-        type: string
-        required: true
-
-permissions:
-  id-token: write
-  contents: read
+        default: lambda1
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # 管理画面のEnvironmentsに対応する。dev,stgごとのシークレットなどが設定できる。
-    environment: ${{ github.event.inputs.environment }}
 
     steps:
-      - name: set env
-        run: |
-          ENV="${{ github.event.inputs.environment }}"
-          echo "ENV2=$ENV" >> $GITHUB_ENV
-        
-      - name: Job start
-        run: |
-          set -e
-          echo "Lambda deployment job started for environment: $ENV2"
+      - name: 🔽 コードチェックアウト
+        uses: actions/checkout@v4
 
-      - name: Job end
-        run: |
-          set -e
-          echo "Lambda deployment job ended for environment: ${{ github.event.inputs.environment }}"
+      - name: 🔧 前処理（venv作成など）
+        id: pre
+        uses: ./.github/actions/lambda-pre
+        with:
+          lambda_name: ${{ github.event.inputs.lambda_name }}
+
+      - name: 🚀 メイン処理（zip作成など）
+        id: main
+        uses: ./.github/actions/lambda-main
+        with:
+          lambda_name: ${{ github.event.inputs.lambda_name }}
+          pre_output: ${{ steps.pre.outputs.pre_message }}
+
+      - name: 🧹 後処理（確認・ログ出力など）
+        uses: ./.github/actions/lambda-post
+        with:
+          lambda_name: ${{ github.event.inputs.lambda_name }}
+          main_result: ${{ steps.main.outputs.zip_path }}
