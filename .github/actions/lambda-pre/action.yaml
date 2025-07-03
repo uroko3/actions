@@ -1,0 +1,18 @@
+name: Lambda Pre Step
+description: Lambda前処理
+
+inputs:
+  lambda_name:
+    required: true
+    description: '対象Lambda名'
+
+outputs:
+  pre_message:
+    description: "前処理で生成したメッセージ"
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        echo "🚧 Lambda name is ${{ inputs.lambda_name }}"
+        echo "pre_message=Hello from Pre for ${{ inputs.lambda_name }}" >> $GITHUB_OUTPUT
