@@ -1,0 +1,223 @@
+name: Deploy Lambda (Python/Node auto)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment (dev or prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options: [dev, prod]
+      target_path:
+        description: 'Path to Lambda source (e.g., lambda/python/breadcrumb or lambda/nodejs/hoge)'
+        required: true
+        default: 'lambda/python/breadcrumb'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set environment-specific variables
+        id: vars
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          echo "Environment: $ENV"
+
+          if [ "$ENV" = "prod" ]; then
+            echo "FUNCTION_NAME=test-actions-auto-prod" >> $GITHUB_ENV
+            echo "ROLE_ARN=${{ secrets.AWS_ROLE_PROD }}" >> $GITHUB_ENV
+            echo "SUBNET_ID=${{ secrets.AWS_VPC_SUBNET_ID1_PROD }}" >> $GITHUB_ENV
+            echo "SG_ID=${{ secrets.AWS_SG_ID_PROD }}" >> $GITHUB_ENV
+            echo "ALIAS_NAME=prod" >> $GITHUB_ENV
+          else
+            echo "FUNCTION_NAME=test-actions-auto-dev" >> $GITHUB_ENV
+            echo "ROLE_ARN=${{ secrets.AWS_ROLE }}" >> $GITHUB_ENV
+            echo "SUBNET_ID=${{ secrets.AWS_VPC_SUBNET_ID1 }}" >> $GITHUB_ENV
+            echo "SG_ID=${{ secrets.AWS_SG_ID }}" >> $GITHUB_ENV
+            echo "ALIAS_NAME=dev" >> $GITHUB_ENV
+          fi
+
+          echo "TARGET=${{ github.event.inputs.target_path }}" >> $GITHUB_ENV
+
+      - name: Detect runtime & handler by target
+        id: detect
+        run: |
+          set -e
+          TARGET="${TARGET:-lambda/python/breadcrumb}"
+
+          if [ ! -d "$TARGET" ]; then
+            echo "❌ TARGET not found: $TARGET"; exit 1
+          fi
+
+          # 代表的ハンドラファイルをチェック
+          if [ -f "$TARGET/lambda_function.py" ]; then
+            echo "LANG=python" >> $GITHUB_ENV
+            echo "RUNTIME=python3.13" >> $GITHUB_ENV
+            echo "HANDLER=lambda_function.lambda_handler" >> $GITHUB_ENV
+            echo "HANDLER_FILE=lambda_function.py" >> $GITHUB_ENV
+          elif [ -f "$TARGET/index.mjs" ]; then
+            echo "LANG=node" >> $GITHUB_ENV
+            echo "RUNTIME=nodejs20.x" >> $GITHUB_ENV
+            echo "HANDLER=index.handler" >> $GITHUB_ENV
+            echo "HANDLER_FILE=index.mjs" >> $GITHUB_ENV
+          else
+            echo "❌ Neither lambda_function.py nor index.mjs found in $TARGET"; exit 1
+          fi
+
+          echo "Detected: $(cat <<EOT
+          LANG=$LANG
+          RUNTIME=$RUNTIME
+          HANDLER=$HANDLER
+          TARGET=$TARGET
+          EOT
+          )"
+
+      - name: Setup Python (if needed)
+        if: env.LANG == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Setup Node.js (if needed)
+        if: env.LANG == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            **/package-lock.json
+            **/npm-shrinkwrap.json
+
+      - name: Build & Zip (Python)
+        if: env.LANG == 'python'
+        run: |
+          set -e
+          cd "$TARGET"
+          rm -rf build
+          mkdir -p build
+
+          # 依存の同梱（任意）
+          if [ -f requirements.txt ]; then
+            python -m venv venv
+            . venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt -t build/
+          fi
+
+          # ハンドラと common を同梱
+          cp "$HANDLER_FILE" build/
+          # ../common/common を同梱（構成に合わせて調整）
+          if [ -d ../common/common ]; then
+            cp -r ../common/common build/common
+          fi
+
+          # 追加で必要なリソースがあればここで build/ にコピー
+
+          cd build
+          zip -r ../../../function.zip . \
+            -x "**/__pycache__/**" "*.pyc" "*.pyo"
+
+      - name: Build & Zip (Node)
+        if: env.LANG == 'node'
+        run: |
+          set -e
+          cd "$TARGET"
+
+          # 依存があれば同梱
+          if [ -f package.json ]; then
+            if [ -f package-lock.json ]; then
+              npm ci --omit=dev
+            else
+              npm i --production
+            fi
+          fi
+
+          # ../common/common を同梱（構成に合わせて調整）
+          COMMON_PATH="../common/common"
+          if [ -d "$COMMON_PATH" ]; then
+            zip -r ../../function.zip "$HANDLER_FILE" package.json node_modules "$COMMON_PATH" \
+              -x "node_modules/.bin/*" "node_modules/**/test/**" "node_modules/**/docs/**" "*.log"
+          else
+            zip -r ../../function.zip "$HANDLER_FILE" package.json node_modules \
+              -x "node_modules/.bin/*" "node_modules/**/test/**" "node_modules/**/docs/**" "*.log"
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create or Update Lambda
+        run: |
+          set -e
+          if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
+            echo "Updating configuration..."
+            aws lambda update-function-configuration \
+              --function-name "$FUNCTION_NAME" \
+              --runtime "$RUNTIME" \
+              --handler "$HANDLER" \
+              --vpc-config SubnetIds=$SUBNET_ID,SecurityGroupIds=$SG_ID
+            aws lambda wait function-updated-v2 --function-name "$FUNCTION_NAME"
+
+            echo "Updating code..."
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://function.zip
+          else
+            echo "Creating function..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --role "$ROLE_ARN" \
+              --runtime "$RUNTIME" \
+              --handler "$HANDLER" \
+              --vpc-config SubnetIds=$SUBNET_ID,SecurityGroupIds=$SG_ID \
+              --zip-file fileb://function.zip
+          fi
+          aws lambda wait function-active-v2 --function-name "$FUNCTION_NAME"
+
+      - name: Set environment variables (safe JSON)
+        run: |
+          cat <<'JSON' > env.json
+          {
+            "Variables": {
+              "ENV1": "aaa$[bbb",
+              "ENV2": "hog"
+            }
+          }
+          JSON
+          aws lambda update-function-configuration \
+            --function-name "$FUNCTION_NAME" \
+            --environment file://env.json
+
+      - name: Publish new version
+        run: |
+          VERSION=$(aws lambda publish-version \
+            --function-name "$FUNCTION_NAME" \
+            --description "GitHub $GITHUB_SHA" \
+            --query 'Version' --output text)
+          echo "NEW_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "📦 Published: $VERSION"
+
+      - name: Point alias to new version
+        run: |
+          if aws lambda get-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" >/dev/null 2>&1; then
+            aws lambda update-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" --function-version "$NEW_VERSION"
+            echo "🔄 Alias $ALIAS_NAME → $NEW_VERSION"
+          else
+            aws lambda create-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" --function-version "$NEW_VERSION"
+            echo "✨ Alias $ALIAS_NAME created → $NEW_VERSION"
+          fi
